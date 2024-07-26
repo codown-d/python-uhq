@@ -1,62 +1,58 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QStackedWidget, QLabel
+# main.py
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QStackedWidget
+from routes import load_route  # 导入加载路由的函数
 
-class StackedWidgetExample(QWidget):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle('Stacked Widget Example')
+        self.setWindowTitle("Routing Example with Init Registration")
+        self.setGeometry(100, 100, 600, 400)
 
-        # 创建主布局
-        main_layout = QVBoxLayout()
-
-        # 创建一个 QStackedWidget
+        # Create a stacked widget for routing
         self.stacked_widget = QStackedWidget()
 
-        # 创建第一个页面
-        page1 = QWidget()
-        page1_layout = QVBoxLayout()
-        page1_layout.addWidget(QLabel('This is Page 1'))
-        page1.setLayout(page1_layout)
-        
-        # 创建第二个页面
-        page2 = QWidget()
-        page2_layout = QVBoxLayout()
-        page2_layout.addWidget(QLabel('This is Page 2'))
-        page2.setLayout(page2_layout)
-        
-        # 创建第三个页面
-        page3 = QWidget()
-        page3_layout = QVBoxLayout()
-        page3_layout.addWidget(QLabel('This is Page 3'))
-        page3.setLayout(page3_layout)
-        
-        # 将页面添加到 QStackedWidget 中
-        self.stacked_widget.addWidget(page1)
-        self.stacked_widget.addWidget(page2)
-        self.stacked_widget.addWidget(page3)
+        # Create pages dynamically from routes
+        self.routes = ["home", "mine", "other"]
+        self.pages = {route: load_route(route)() for route in self.routes}  # 实例化每个页面类
 
-        # 创建按钮布局
-        button_layout = QHBoxLayout()
-        btn1 = QPushButton('Page 1')
-        btn1.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
-        button_layout.addWidget(btn1)
+        # Add pages to stacked widget
+        for page in self.pages.values():
+            self.stacked_widget.addWidget(page)
 
-        btn2 = QPushButton('Page 2')
-        btn2.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(1))
-        button_layout.addWidget(btn2)
-
-        btn3 = QPushButton('Page 3')
-        btn3.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
-        button_layout.addWidget(btn3)
-
-        # 将按钮布局和 QStackedWidget 添加到主布局
-        main_layout.addLayout(button_layout)
+        # Main layout
+        main_layout = QVBoxLayout()
         main_layout.addWidget(self.stacked_widget)
 
-        self.setLayout(main_layout)
+        container = QWidget()
+        container.setLayout(main_layout)
+        self.setCentralWidget(container)
 
-app = QApplication(sys.argv)
-window = StackedWidgetExample()
-window.show()
-sys.exit(app.exec_())
+        # Create navigation buttons
+        self.create_navigation_buttons(main_layout)
+
+    def create_navigation_buttons(self, layout):
+        """Create navigation buttons for routing."""
+        button_layout = QVBoxLayout()
+
+        for path in self.routes:
+            button = QPushButton(f"Go to {path.capitalize()}")
+            button.clicked.connect(lambda _, p=path: self.navigate_to(p))
+            button_layout.addWidget(button)
+
+        # Add button layout to the main layout
+        layout.addLayout(button_layout)
+
+    def navigate_to(self, page_path):
+        """Navigate to the specified page based on the path."""
+        if page_path in self.routes:
+            index = self.routes.index(page_path)
+            self.stacked_widget.setCurrentIndex(index)
+
+if __name__ == "__main__":
+    app = QApplication([])
+
+    window = MainWindow()
+    window.show()
+
+    app.exec()
